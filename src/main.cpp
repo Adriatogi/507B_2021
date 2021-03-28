@@ -37,6 +37,11 @@ void pre_auton(void) {
   // Example: clearing encoders, setting servo positions, ...
 }
 
+int drivePID()
+{
+
+  return 1;
+}
 /*---------------------------------------------------------------------------*/
 /*                                                                           */
 /*                              Autonomous Task                              */
@@ -48,6 +53,7 @@ void pre_auton(void) {
 /*---------------------------------------------------------------------------*/
 
 void autonomous(void) {
+  task randomName(drivePID);
   // ..........................................................................
   // Insert autonomous user code here.
   // ..........................................................................
