@@ -18,6 +18,16 @@ using namespace vex;
 competition Competition;
 
 // define your global instances of motors and other devices here
+motor frontRight(PORT18, gearSetting::ratio18_1, false);
+motor frontLeft(PORT19, gearSetting::ratio18_1, true);
+motor backLeft(PORT17, gearSetting::ratio18_1, true);
+motor backRight(PORT15, gearSetting::ratio18_1, false);
+
+motor_group leftGroup(frontLeft, backLeft);
+motor_group rightGroup(frontRight, backRight);
+drivetrain driveTrain(leftGroup, rightGroup);
+
+controller Controller1;
 
 /*---------------------------------------------------------------------------*/
 /*                          Pre-Autonomous Functions                         */
@@ -36,12 +46,6 @@ void pre_auton(void) {
   // All activities that occur before the competition starts
   // Example: clearing encoders, setting servo positions, ...
 }
-
-int drivePID()
-{
-
-  return 1;
-}
 /*---------------------------------------------------------------------------*/
 /*                                                                           */
 /*                              Autonomous Task                              */
@@ -53,7 +57,6 @@ int drivePID()
 /*---------------------------------------------------------------------------*/
 
 void autonomous(void) {
-  task randomName(drivePID);
   // ..........................................................................
   // Insert autonomous user code here.
   // ..........................................................................
@@ -75,7 +78,8 @@ void usercontrol(void) {
     // This is the main execution loop for the user control program.
     // Each time through the loop your program should update motor + servo
     // values based on feedback from the joysticks.
-
+    leftGroup.spin(vex::directionType::fwd, (Controller1.Axis3.value() + Controller1.Axis1.value())*0.8, vex::velocityUnits::pct);
+    rightGroup.spin(vex::directionType::fwd, (Controller1.Axis3.value() - Controller1.Axis1.value())*0.8, vex::velocityUnits::pct);
     // ........................................................................
     // Insert user code here. This is where you use the joystick values to
     // update your motors, etc.
