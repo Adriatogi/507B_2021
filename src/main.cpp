@@ -112,6 +112,10 @@ void pre_auton(void) {
       Controller1.Screen.setCursor(1,1);
       Controller1.Screen.print("Inertial Sensor Calibrating");
   }
+
+  Controller1.Screen.clearScreen();
+  Controller1.Screen.setCursor(1,1);
+  Controller1.Screen.print("Ready to go");
   // All activities that occur before the competition starts
   // Example: clearing encoders, setting servo positions, ...
 }
