@@ -11,6 +11,7 @@
 // ---- END VEXCODE CONFIGURED DEVICES ----
 
 #include "vex.h"
+#include "auton_voids.h"
 
 using namespace vex;
 
@@ -29,6 +30,8 @@ drivetrain driveTrain(leftGroup, rightGroup);
 
 controller Controller1;
 
+inertial Inertial(PORT20); // change port
+
 /*---------------------------------------------------------------------------*/
 /*                          Pre-Autonomous Functions                         */
 /*                                                                           */
@@ -38,6 +41,33 @@ controller Controller1;
 /*  function is only called once after the V5 has been powered on and        */
 /*  not every time that the robot is disabled.                               */
 /*---------------------------------------------------------------------------*/
+void pTurn(double revs) //P loop turn code
+{
+  if(Inertial.installed())
+  {
+    int dt = 20; // Wait time in milliseconds
+    double target = revs; // In revolutions
+    double error = target - Inertial.rotation();
+    double kP = .6;
+    while (std::abs(error) > 1) // Allows +- 1 degree variance, don't reduce unless you know what you are doing
+    {
+      error = target - Inertial.rotation();
+      double percent = kP * error + 20 * error / std::abs(error);
+      leftGroup.spin(directionType::fwd, percent, pct);
+      rightGroup.spin(directionType::rev, percent, pct);
+      vex::task::sleep(dt);
+    }
+    leftGroup.stop();
+    rightGroup.stop();
+  }
+  else
+  {
+    Brain.Screen.clearScreen();
+    Brain.Screen.setFont(fontType::mono40);
+    Brain.Screen.setFillColor(red);
+    Brain.Screen.print("No Inertial Sensor Installed");
+  }
+}
 
 void pre_auton(void) {
   // Initializing Robot Configuration. DO NOT REMOVE!
@@ -56,7 +86,6 @@ void pre_auton(void) {
 /*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
 
-#include "auton_voids"
 
 void autonomous(void) {
   // ..........................................................................
