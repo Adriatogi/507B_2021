@@ -104,6 +104,14 @@ void pre_auton(void) {
   // Initializing Robot Configuration. DO NOT REMOVE!
   vexcodeInit();
 
+  if(Inertial.installed())
+  {
+      Inertial.calibrate(2000);
+      vex::task::sleep(2000);
+      Controller1.Screen.clearScreen();
+      Controller1.Screen.setCursor(1,1);
+      Controller1.Screen.print("Inertial Sensor Calibrating");
+  }
   // All activities that occur before the competition starts
   // Example: clearing encoders, setting servo positions, ...
 }
