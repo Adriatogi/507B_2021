@@ -5,12 +5,12 @@ const float GEAR_RATIO = 6; //remeasure
 const float AUTON_DRIVE_PCT = 50; // remeasure
 const float TURNING_DIAMETER = 13; // distance (in inches) from top-left wheel to bottom-right wheel/ remeasure
 
-void move(float inches) {
+/*void move(float inches) {
   driveTrain.resetRotation();
   float inchesPerDegree = WHEEL_CIRCUMFERENCE / 360;
   float degrees = inches / inchesPerDegree;
   ALL.rotateFor(degrees * GEAR_RATIO, vex::rotationUnits::deg, AUTON_DRIVE_PCT, vex::velocityUnits::pct);
-}
+}*/
 
 /*void lift(float inches) {
   L.resetRotation();
@@ -38,14 +38,14 @@ void rollertray(int s, int t) {
   T.spin(directionType::fwd, s, velocityUnits::rpm);
   task::sleep(t);
 }*/
-
+/*
 void turn(float degrees) {
   //+90 degrees is a right turn, -90 degrees is a left turn
   float turningRatio = TURNING_DIAMETER / WHEEL_DIAMETER;
   float wheelDegrees = turningRatio * degrees;
   rightGroup.rotateFor(wheelDegrees * GEAR_RATIO / 2, vex::rotationUnits::deg AUTON_DRIVE_PCT, vex::velocityUnits::pct);
   leftGroup.rotateFor(wheelDegrees * GEAR_RATIO / -2, vex::rotationUnits::deg AUTON_DRIVE_PCT, vex::velocityUnits::pct);
-} //if code doesn't work use following:
+} //if code doesn't work use following:*/
 
 /*void LT(float degrees) {
   //+90 degrees is a left turn

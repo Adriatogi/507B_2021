@@ -49,10 +49,10 @@ void pTurn(double revs) //P loop turn code
     double target = revs; // In revolutions
     double error = target - Inertial.rotation();
     double kP = .6;
-    while (std::abs(error) > 1) // Allows +- 1 degree variance, don't reduce unless you know what you are doing
+    while (abs(error) > 1) // Allows +- 1 degree variance, don't reduce unless you know what you are doing
     {
       error = target - Inertial.rotation();
-      double percent = kP * error + 20 * error / std::abs(error);
+      double percent = kP * error + 20 * error / abs(error);
       leftGroup.spin(directionType::fwd, percent, pct);
       rightGroup.spin(directionType::rev, percent, pct);
       vex::task::sleep(dt);
@@ -62,12 +62,43 @@ void pTurn(double revs) //P loop turn code
   }
   else
   {
-    Brain.Screen.clearScreen();
-    Brain.Screen.setFont(fontType::mono40);
-    Brain.Screen.setFillColor(red);
-    Brain.Screen.print("No Inertial Sensor Installed");
+    Controller1.Screen.clearScreen();
+    Controller1.Screen.setCursor(1,1);
+    Controller1.Screen.print("No Inertial Sensor Installed");
   }
 }
+
+/*
+void pdTurn(double degrees) //PD loop turn code (better than the smartdrive and P loop methods once kP and kD are tuned properly)
+{
+  if(Inertial.installed())
+  {
+    int dt = 20;  // Recommended wait time in milliseconds
+    double target = degrees; // In revolutions
+    double error = target - Inertial.rotation();
+    double kP = .7;
+    double kD = .1;
+    double prevError = error;
+    while (abs(error) > 1) // Allows +- 1 degree variance, don't reduce unless you know what you are doing
+    {
+      error = target - Inertial.rotation();
+      double derivative = (error - prevError)/dt;
+      double percent = kP * error + kD * derivative;
+      leftGroup.spin(directionType::fwd, percent, pct);
+      rightGroup.spin(directionType::rev, percent, pct);
+      vex::task::sleep(dt);
+      prevError = error;
+    }
+    leftGroup.stop();
+    rightGroup.stop();
+  }
+  else
+  {
+    Controller1.Screen.clearScreen();
+    Controller1.Screen.setCursor(1,1);
+    Controller1.Screen.print("No Inertial Sensor Installed");
+  }
+}*/
 
 void pre_auton(void) {
   // Initializing Robot Configuration. DO NOT REMOVE!
