@@ -218,12 +218,12 @@ void usercontrol(void) {
      intake1.spin(directionType::rev, 600, velocityUnits::rpm);
      intake2.spin(directionType::rev, 600, velocityUnits::rpm);
    }
-   else if(Controller1.ButtonY.pressing())
+   else if(Controller1.ButtonY.pressing()) // Eject ball when there is one on top
    {
      intake1.spin(directionType::fwd, 600, velocityUnits::rpm);
      intake2.stop(brakeType::brake);
    }
-   else if(Controller1.ButtonUp.pressing())
+   else if(Controller1.ButtonUp.pressing()) // eject ball when no ball on top
    {
      intake1.spin(directionType::fwd, 600, velocityUnits::rpm);
      intake2.spin(directionType::rev, 600, velocityUnits::rpm);
@@ -233,7 +233,6 @@ void usercontrol(void) {
      intake1.stop(brakeType::brake);
      intake2.stop(brakeType::brake);
    }
-printf("Inertial: %f\n", Inertial.rotation());
 
     wait(20, msec); // Sleep the task for a short amount of time to
                     // prevent wasted resources.
