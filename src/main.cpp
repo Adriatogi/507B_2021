@@ -1,3 +1,12 @@
+// ---- START VEXCODE CONFIGURED DEVICES ----
+// Robot Configuration:
+// [Name]               [Type]        [Port(s)]
+// ---- END VEXCODE CONFIGURED DEVICES ----
+// ---- START VEXCODE CONFIGURED DEVICES ----
+// Robot Configuration:
+// [Name]               [Type]        [Port(s)]
+// Inertial3            inertial      3               
+// ---- END VEXCODE CONFIGURED DEVICES ----
 /*----------------------------------------------------------------------------*/
 /*                                                                            */
 /*    Module:       main.cpp                                                  */
@@ -26,7 +35,7 @@ motor backRight(PORT15, gearSetting::ratio18_1, false);
 motor roller1(PORT14, gearSetting::ratio6_1, true);
 motor roller2(PORT20,gearSetting::ratio6_1, false);
 motor intake1(PORT13, gearSetting::ratio6_1, true);
-motor intake2 (PORT1, gearSetting::ratio6_1, true);
+motor intake2 (PORT2, gearSetting::ratio6_1, true);
 
 
 motor_group leftGroup(frontLeft, backLeft);
@@ -35,7 +44,7 @@ drivetrain driveTrain(leftGroup, rightGroup);
 
 controller Controller1;
 
-inertial Inertial(PORT20); // change port
+inertial Inertial(PORT7); // change port
 
 /*---------------------------------------------------------------------------*/
 /*                          Pre-Autonomous Functions                         */
@@ -46,53 +55,36 @@ inertial Inertial(PORT20); // change port
 /*  function is only called once after the V5 has been powered on and        */
 /*  not every time that the robot is disabled.                               */
 /*---------------------------------------------------------------------------*/
-void pTurn(double revs) //P loop turn code
+/*
+void pTurn(double degs) //P loop turn code
 {
+  Controller1.Screen.clearScreen();
+  Controller1.Screen.setCursor(1,1);
+  Controller1.Screen.print("Running PTurn");
   if(Inertial.installed())
   {
     int dt = 20; // Wait time in milliseconds
-    double target = revs; // In revolutions
+    double target = degs; // In degrees
     double error = target - Inertial.rotation();
-    double kP = .6;
-    while (abs(error) > 1) // Allows +- 1 degree variance, don't reduce unless you know what you are doing
-    {
-      error = target - Inertial.rotation();
-      double percent = kP * error + 20 * error / abs(error);
-      leftGroup.spin(directionType::fwd, percent, pct);
-      rightGroup.spin(directionType::rev, percent, pct);
-      vex::task::sleep(dt);
-    }
-    leftGroup.stop();
-    rightGroup.stop();
-  }
-  else
-  {
+    double kP = .11;
     Controller1.Screen.clearScreen();
-    Controller1.Screen.setCursor(1,1);
-    Controller1.Screen.print("No Inertial Sensor Installed");
-  }
-}
-
-/*
-void pdTurn(double degrees) //PD loop turn code (better than the smartdrive and P loop methods once kP and kD are tuned properly)
-{
-  if(Inertial.installed())
-  {
-    int dt = 20;  // Recommended wait time in milliseconds
-    double target = degrees; // In revolutions
-    double error = target - Inertial.rotation();
-    double kP = .7;
-    double kD = .1;
-    double prevError = error;
+    Controller1.Screen.setCursor(2,1);
+    Controller1.Screen.print("Checking PTurn");
+    printf("Percent: %f\n", error);
+    
+    printf("Error: %f\n", error);
     while (abs(error) > 1) // Allows +- 1 degree variance, don't reduce unless you know what you are doing
     {
+      printf("Error: %f\n", error);
+      Controller1.Screen.setCursor(3,1);
+      Controller1.Screen.clearLine();
+      Controller1.Screen.print("Turning PTurn");
       error = target - Inertial.rotation();
-      double derivative = (error - prevError)/dt;
-      double percent = kP * error + kD * derivative;
-      leftGroup.spin(directionType::fwd, percent, pct);
-      rightGroup.spin(directionType::rev, percent, pct);
+      double percent = kP * error + 4 * error / abs(error);
+      printf("Percent: %f\n", percent);
+      leftGroup.spin(directionType::rev, percent, pct);
+      rightGroup.spin(directionType::fwd, percent, pct);
       vex::task::sleep(dt);
-      prevError = error;
     }
     leftGroup.stop();
     rightGroup.stop();
@@ -105,17 +97,52 @@ void pdTurn(double degrees) //PD loop turn code (better than the smartdrive and 
   }
 }*/
 
+
+void pdTurn(double degrees) //PD loop turn code (better than the smartdrive and P loop methods once kP and kD are tuned properly)
+{
+  if(Inertial.installed())
+  {
+    int dt = 20;  // Recommended wait time in milliseconds
+    double target = degrees; // In revolutions
+    double error = target - Inertial.rotation();
+    double kP = .26;
+    double kD = .30;//still needs tweeking
+    double prevError = error;
+    while (abs(error) > 1) // Allows +- 1 degree variance, don't reduce unless you know what you are doing
+    {
+      error = target - Inertial.rotation();
+      printf("Error: %f\n", error);
+      double derivative = (error - prevError)/dt;
+      printf("derivative: %f\n", derivative);
+      double percent = kP * error + kD * derivative;
+      printf("Percent: %f\n", percent);
+      leftGroup.spin(directionType::rev, percent, pct);
+      rightGroup.spin(directionType::fwd, percent, pct);
+      vex::task::sleep(dt);
+      prevError = error;
+    }
+    leftGroup.stop();
+    rightGroup.stop();
+  }
+  else
+  {
+    Controller1.Screen.clearScreen();
+    Controller1.Screen.setCursor(1,1);
+    Controller1.Screen.print("No Inertial Sensor Installed");
+  }
+}
+
 void pre_auton(void) {
   // Initializing Robot Configuration. DO NOT REMOVE!
   vexcodeInit();
 
   if(Inertial.installed())
   {
-      Inertial.calibrate(2000);
-      vex::task::sleep(2000);
       Controller1.Screen.clearScreen();
       Controller1.Screen.setCursor(1,1);
       Controller1.Screen.print("Inertial Sensor Calibrating");
+      Inertial.calibrate(2000);
+      vex::task::sleep(2000);
   }
 
   Controller1.Screen.clearScreen();
@@ -139,6 +166,11 @@ void autonomous(void) {
   // ..........................................................................
   // Insert autonomous user code here.
   // ..........................................................................
+  //pTurn(90);
+  pdTurn(90);
+      Controller1.Screen.setCursor(1,1);
+      Controller1.Screen.clearLine();
+      Controller1.Screen.print("Finished");
 }
 
 /*---------------------------------------------------------------------------*/
@@ -163,55 +195,45 @@ void usercontrol(void) {
     if(Controller1.ButtonR1.pressing())
    {
      roller1.spin(directionType::fwd, 600, velocityUnits::rpm);
-   }
-   else if(Controller1.ButtonR2.pressing())
-   {
-     roller1.spin(directionType::rev, 600, velocityUnits::rpm);
-   }
-   else
-   {
-     roller1.stop(brakeType::brake);
-   }
- 
-   if(Controller1.ButtonR1.pressing())
-   {
      roller2.spin(directionType::fwd, 600, velocityUnits::rpm);
    }
    else if(Controller1.ButtonR2.pressing())
    {
+     roller1.spin(directionType::rev, 600, velocityUnits::rpm);
      roller2.spin(directionType::rev, 600, velocityUnits::rpm);
    }
    else
    {
+     roller1.stop(brakeType::brake);
      roller2.stop(brakeType::brake);
    }
  
    if(Controller1.ButtonL1.pressing())
    {
      intake1.spin(directionType::fwd, 600, velocityUnits::rpm);
-   }
-   else if(Controller1.ButtonL2.pressing())
-   {
-     intake1.spin(directionType::rev, 600, velocityUnits::rpm);
-   }
-   else
-   {
-     intake1.stop(brakeType::brake);
-   }
- 
-   if(Controller1.ButtonL1.pressing())
-   {
      intake2.spin(directionType::fwd, 600, velocityUnits::rpm);
    }
    else if(Controller1.ButtonL2.pressing())
    {
+     intake1.spin(directionType::rev, 600, velocityUnits::rpm);
+     intake2.spin(directionType::rev, 600, velocityUnits::rpm);
+   }
+   else if(Controller1.ButtonY.pressing())
+   {
+     intake1.spin(directionType::fwd, 600, velocityUnits::rpm);
+     intake2.stop(brakeType::brake);
+   }
+   else if(Controller1.ButtonUp.pressing())
+   {
+     intake1.spin(directionType::fwd, 600, velocityUnits::rpm);
      intake2.spin(directionType::rev, 600, velocityUnits::rpm);
    }
    else
    {
+     intake1.stop(brakeType::brake);
      intake2.stop(brakeType::brake);
    }
-
+printf("Inertial: %f\n", Inertial.rotation());
 
     wait(20, msec); // Sleep the task for a short amount of time to
                     // prevent wasted resources.
