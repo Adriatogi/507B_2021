@@ -23,6 +23,11 @@ motor frontRight(PORT18, gearSetting::ratio18_1, false);
 motor frontLeft(PORT19, gearSetting::ratio18_1, true);
 motor backLeft(PORT17, gearSetting::ratio18_1, true);
 motor backRight(PORT15, gearSetting::ratio18_1, false);
+motor roller1(PORT14, gearSetting::ratio6_1, true);
+motor roller2(PORT20,gearSetting::ratio6_1, false);
+motor intake1(PORT13, gearSetting::ratio6_1, true);
+motor intake2 (PORT1, gearSetting::ratio6_1, true);
+
 
 motor_group leftGroup(frontLeft, backLeft);
 motor_group rightGroup(frontRight, backRight);
@@ -154,10 +159,59 @@ void usercontrol(void) {
     // values based on feedback from the joysticks.
     leftGroup.spin(vex::directionType::fwd, (Controller1.Axis3.value() + Controller1.Axis1.value())*0.8, vex::velocityUnits::pct);
     rightGroup.spin(vex::directionType::fwd, (Controller1.Axis3.value() - Controller1.Axis1.value())*0.8, vex::velocityUnits::pct);
-    // ........................................................................
-    // Insert user code here. This is where you use the joystick values to
-    // update your motors, etc.
-    // ........................................................................
+   
+    if(Controller1.ButtonR1.pressing())
+   {
+     roller1.spin(directionType::fwd, 600, velocityUnits::rpm);
+   }
+   else if(Controller1.ButtonR2.pressing())
+   {
+     roller1.spin(directionType::rev, 600, velocityUnits::rpm);
+   }
+   else
+   {
+     roller1.stop(brakeType::brake);
+   }
+ 
+   if(Controller1.ButtonR1.pressing())
+   {
+     roller2.spin(directionType::fwd, 600, velocityUnits::rpm);
+   }
+   else if(Controller1.ButtonR2.pressing())
+   {
+     roller2.spin(directionType::rev, 600, velocityUnits::rpm);
+   }
+   else
+   {
+     roller2.stop(brakeType::brake);
+   }
+ 
+   if(Controller1.ButtonL1.pressing())
+   {
+     intake1.spin(directionType::fwd, 600, velocityUnits::rpm);
+   }
+   else if(Controller1.ButtonL2.pressing())
+   {
+     intake1.spin(directionType::rev, 600, velocityUnits::rpm);
+   }
+   else
+   {
+     intake1.stop(brakeType::brake);
+   }
+ 
+   if(Controller1.ButtonL1.pressing())
+   {
+     intake2.spin(directionType::fwd, 600, velocityUnits::rpm);
+   }
+   else if(Controller1.ButtonL2.pressing())
+   {
+     intake2.spin(directionType::rev, 600, velocityUnits::rpm);
+   }
+   else
+   {
+     intake2.stop(brakeType::brake);
+   }
+
 
     wait(20, msec); // Sleep the task for a short amount of time to
                     // prevent wasted resources.
