@@ -55,7 +55,7 @@ inertial Inertial(PORT7); // change port
 /*  function is only called once after the V5 has been powered on and        */
 /*  not every time that the robot is disabled.                               */
 /*---------------------------------------------------------------------------*/
-/*
+
 void pTurn(double degs) //P loop turn code
 {
   Controller1.Screen.clearScreen();
@@ -95,9 +95,9 @@ void pTurn(double degs) //P loop turn code
     Controller1.Screen.setCursor(1,1);
     Controller1.Screen.print("No Inertial Sensor Installed");
   }
-}*/
+}
 
-
+/*
 void pdTurn(double degrees) //PD loop turn code (better than the smartdrive and P loop methods once kP and kD are tuned properly)
 {
   if(Inertial.installed())
@@ -130,7 +130,7 @@ void pdTurn(double degrees) //PD loop turn code (better than the smartdrive and 
     Controller1.Screen.setCursor(1,1);
     Controller1.Screen.print("No Inertial Sensor Installed");
   }
-}
+}*/
 
 void pre_auton(void) {
   // Initializing Robot Configuration. DO NOT REMOVE!
@@ -167,10 +167,10 @@ void autonomous(void) {
   // Insert autonomous user code here.
   // ..........................................................................
   //pTurn(90);
-  pdTurn(90);
-      Controller1.Screen.setCursor(1,1);
-      Controller1.Screen.clearLine();
-      Controller1.Screen.print("Finished");
+  pTurn(90);
+  Controller1.Screen.setCursor(1,1);
+  Controller1.Screen.clearLine();
+  Controller1.Screen.print("Finished");
 }
 
 /*---------------------------------------------------------------------------*/
