@@ -28,18 +28,18 @@ using namespace vex;
 competition Competition;
 
 // define your global instances of motors and other devices here
-motor frontRight(PORT18, gearSetting::ratio18_1, false);
-motor frontLeft(PORT19, gearSetting::ratio18_1, true);
-motor backLeft(PORT17, gearSetting::ratio18_1, true);
-motor backRight(PORT15, gearSetting::ratio18_1, false);
+motor FR(PORT18, gearSetting::ratio18_1, false);
+motor FL(PORT19, gearSetting::ratio18_1, true);
+motor BL(PORT17, gearSetting::ratio18_1, true);
+motor BR(PORT15, gearSetting::ratio18_1, false);
 motor roller1(PORT14, gearSetting::ratio6_1, true);
 motor roller2(PORT20,gearSetting::ratio6_1, false);
 motor intake1(PORT13, gearSetting::ratio6_1, true);
 motor intake2 (PORT2, gearSetting::ratio6_1, true);
 
 
-motor_group leftGroup(frontLeft, backLeft);
-motor_group rightGroup(frontRight, backRight);
+motor_group leftGroup(FL, BL);
+motor_group rightGroup(FR, BR);
 drivetrain driveTrain(leftGroup, rightGroup);
 
 controller Controller1;
@@ -56,6 +56,29 @@ inertial Inertial(PORT7); // change port
 /*  not every time that the robot is disabled.                               */
 /*---------------------------------------------------------------------------*/
 
+void drive(double distanceInches, int speed)
+{
+  driveTrain.driveFor(directionType::fwd, distanceInches, distanceUnits::in, speed, velocityUnits::pct);
+}
+
+void moveRobot(float rotationLeft, float rotationRight, int speed) {
+FL.resetRotation();
+BL.resetRotation();
+FR.resetRotation();
+BR.resetRotation();
+
+FL.rotateTo(rotationLeft, rotationUnits::rev, speed, velocityUnits::pct,
+false);
+BL.rotateTo(rotationLeft, rotationUnits::rev, speed, velocityUnits::pct,
+false);
+FR.rotateTo(rotationRight, rotationUnits::rev, speed, velocityUnits::pct,
+false);
+BR.rotateTo(rotationRight, rotationUnits::rev, speed, velocityUnits::pct,
+false);
+}
+
+
+/*
 void pTurn(double degs) //P loop turn code
 {
   Controller1.Screen.clearScreen();
@@ -78,7 +101,6 @@ void pTurn(double degs) //P loop turn code
       printf("Error: %f\n", error);
       Controller1.Screen.setCursor(3,1);
       Controller1.Screen.clearLine();
-      Controller1.Screen.print("Turning PTurn");
       error = target - Inertial.rotation();
       double percent = kP * error + 4 * error / abs(error);
       printf("Percent: %f\n", percent);
@@ -96,8 +118,8 @@ void pTurn(double degs) //P loop turn code
     Controller1.Screen.print("No Inertial Sensor Installed");
   }
 }
+*/
 
-/*
 void pdTurn(double degrees) //PD loop turn code (better than the smartdrive and P loop methods once kP and kD are tuned properly)
 {
   if(Inertial.installed())
@@ -105,24 +127,26 @@ void pdTurn(double degrees) //PD loop turn code (better than the smartdrive and 
     int dt = 20;  // Recommended wait time in milliseconds
     double target = degrees; // In revolutions
     double error = target - Inertial.rotation();
-    double kP = .26;
-    double kD = .30;//still needs tweeking
+    double kP = .31;
+    double kD = .40;//still needs tweeking
     double prevError = error;
     while (abs(error) > 1) // Allows +- 1 degree variance, don't reduce unless you know what you are doing
     {
       error = target - Inertial.rotation();
-      printf("Error: %f\n", error);
+      printf("Error: %f\n", kP*error);
       double derivative = (error - prevError)/dt;
-      printf("derivative: %f\n", derivative);
+      printf("derivative: %f\n", kD*derivative);
       double percent = kP * error + kD * derivative;
       printf("Percent: %f\n", percent);
       leftGroup.spin(directionType::rev, percent, pct);
       rightGroup.spin(directionType::fwd, percent, pct);
-      vex::task::sleep(dt);
+      task::sleep(dt);
       prevError = error;
     }
+    printf("done");
     leftGroup.stop();
     rightGroup.stop();
+    task::sleep(500);
   }
   else
   {
@@ -130,7 +154,7 @@ void pdTurn(double degrees) //PD loop turn code (better than the smartdrive and 
     Controller1.Screen.setCursor(1,1);
     Controller1.Screen.print("No Inertial Sensor Installed");
   }
-}*/
+}
 
 void pre_auton(void) {
   // Initializing Robot Configuration. DO NOT REMOVE!
@@ -160,14 +184,23 @@ void pre_auton(void) {
 /*                                                                           */
 /*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
-
+void loadBall(float rotations, int speed)
+{
+  
+  intake2.stop(brakeType::hold);
+  intake1.rotateTo(rotations, rotationUnits::rev, 100, velocityUnits::pct, false);
+  roller1.rotateTo(rotations, rotationUnits::rev, 100, velocityUnits::pct, false);
+  roller2.rotateTo(rotations, rotationUnits::rev, 100, velocityUnits::pct, true);
+  moveRobot(10, 10, 50);
+}
 
 void autonomous(void) {
   // ..........................................................................
   // Insert autonomous user code here.
   // ..........................................................................
   //pTurn(90);
-  pTurn(90);
+  pdTurn(90);
+  drive(2, 20);
   Controller1.Screen.setCursor(1,1);
   Controller1.Screen.clearLine();
   Controller1.Screen.print("Finished");
@@ -189,44 +222,44 @@ void usercontrol(void) {
     // This is the main execution loop for the user control program.
     // Each time through the loop your program should update motor + servo
     // values based on feedback from the joysticks.
-    leftGroup.spin(vex::directionType::fwd, (Controller1.Axis3.value() + Controller1.Axis1.value())*0.8, vex::velocityUnits::pct);
-    rightGroup.spin(vex::directionType::fwd, (Controller1.Axis3.value() - Controller1.Axis1.value())*0.8, vex::velocityUnits::pct);
+    leftGroup.spin(vex::directionType::fwd, (Controller1.Axis3.value() + Controller1.Axis1.value())*0.5, vex::velocityUnits::pct);
+    rightGroup.spin(vex::directionType::fwd, (Controller1.Axis3.value() - Controller1.Axis1.value())*0.5, vex::velocityUnits::pct);
    
     if(Controller1.ButtonR1.pressing())
    {
-     roller1.spin(directionType::fwd, 600, velocityUnits::rpm);
-     roller2.spin(directionType::fwd, 600, velocityUnits::rpm);
+     roller1.spin(directionType::fwd, 100, velocityUnits::pct);
+     roller2.spin(directionType::fwd, 100, velocityUnits::pct);
    }
    else if(Controller1.ButtonR2.pressing())
    {
-     roller1.spin(directionType::rev, 600, velocityUnits::rpm);
-     roller2.spin(directionType::rev, 600, velocityUnits::rpm);
+     roller1.spin(directionType::rev, 100, velocityUnits::pct);
+     roller2.spin(directionType::rev, 100, velocityUnits::pct);
    }
    else
    {
      roller1.stop(brakeType::brake);
      roller2.stop(brakeType::brake);
    }
- 
+
    if(Controller1.ButtonL1.pressing())
    {
-     intake1.spin(directionType::fwd, 600, velocityUnits::rpm);
-     intake2.spin(directionType::fwd, 600, velocityUnits::rpm);
+     intake1.spin(directionType::fwd, 100, velocityUnits::pct);
+     intake2.spin(directionType::fwd, 100, velocityUnits::pct);
    }
    else if(Controller1.ButtonL2.pressing())
    {
-     intake1.spin(directionType::rev, 600, velocityUnits::rpm);
-     intake2.spin(directionType::rev, 600, velocityUnits::rpm);
+     intake1.spin(directionType::rev, 100, velocityUnits::pct);
+     intake2.spin(directionType::rev, 100, velocityUnits::pct);
    }
    else if(Controller1.ButtonY.pressing()) // Eject ball when there is one on top
    {
-     intake1.spin(directionType::fwd, 600, velocityUnits::rpm);
-     intake2.stop(brakeType::brake);
+     intake1.spin(directionType::fwd, 100, velocityUnits::pct);
+     intake2.stop(brakeType::hold);
    }
    else if(Controller1.ButtonUp.pressing()) // eject ball when no ball on top
    {
-     intake1.spin(directionType::fwd, 600, velocityUnits::rpm);
-     intake2.spin(directionType::rev, 600, velocityUnits::rpm);
+     intake1.spin(directionType::fwd, 100, velocityUnits::pct);
+     intake2.spin(directionType::rev, 100, velocityUnits::pct);
    }
    else
    {
