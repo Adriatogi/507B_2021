@@ -40,6 +40,7 @@ motor intake2 (PORT2, gearSetting::ratio6_1, true);
 
 motor_group leftGroup(FL, BL);
 motor_group rightGroup(FR, BR);
+motor_group rollers(roller1, roller2);
 drivetrain driveTrain(leftGroup, rightGroup);
 
 controller Controller1;
@@ -56,27 +57,64 @@ inertial Inertial(PORT7); // change port
 /*  not every time that the robot is disabled.                               */
 /*---------------------------------------------------------------------------*/
 
-void drive(double distanceInches, int speed)
+void drive(double distanceInches, int speed, bool wait)
 {
-  driveTrain.driveFor(directionType::fwd, distanceInches, distanceUnits::in, speed, velocityUnits::pct);
+  driveTrain.driveFor(directionType::fwd, distanceInches, distanceUnits::in, speed, velocityUnits::pct, wait); // wait to complete
 }
 
-void moveRobot(float rotationLeft, float rotationRight, int speed) {
-FL.resetRotation();
-BL.resetRotation();
-FR.resetRotation();
-BR.resetRotation();
+void moveRobotNoWait(float rotationLeft, float rotationRight, int speed) {
+  FL.resetRotation();
+  BL.resetRotation();
+  FR.resetRotation();
+  BR.resetRotation();
 
-FL.rotateTo(rotationLeft, rotationUnits::rev, speed, velocityUnits::pct,
-false);
-BL.rotateTo(rotationLeft, rotationUnits::rev, speed, velocityUnits::pct,
-false);
-FR.rotateTo(rotationRight, rotationUnits::rev, speed, velocityUnits::pct,
-false);
-BR.rotateTo(rotationRight, rotationUnits::rev, speed, velocityUnits::pct,
-false);
+  FL.rotateTo(rotationLeft, rotationUnits::rev, speed, velocityUnits::pct,
+  false);
+  BL.rotateTo(rotationLeft, rotationUnits::rev, speed, velocityUnits::pct,
+  false);
+  FR.rotateTo(rotationRight, rotationUnits::rev, speed, velocityUnits::pct,
+  false);
+  BR.rotateTo(rotationRight, rotationUnits::rev, speed, velocityUnits::pct,
+  false);
 }
 
+void moveRobotTimer(int speed, int ms) {
+  FL.spin(directionType::fwd, speed, velocityUnits::pct);
+  BL.spin(directionType::fwd, speed, velocityUnits::pct);
+  FR.spin(directionType::fwd, speed, velocityUnits::pct);
+  BR.spin(directionType::fwd, speed, velocityUnits::pct);
+
+  task::sleep(ms);
+  FL.spin(directionType::rev, speed * 0.1, velocityUnits::pct);
+  BL.spin(directionType::rev, speed * 0.1, velocityUnits::pct);
+  FR.spin(directionType::rev, speed * 0.1, velocityUnits::pct);
+  BR.spin(directionType::rev, speed * 0.1, velocityUnits::pct);
+  FL.stop();
+  BL.stop();
+  FR.stop();
+  BR.stop();
+}
+
+void loadBall(float rotations, int speed, bool wait)
+{
+  intake1.resetRotation();
+  rollers.resetRotation();
+
+  rollers.rotateTo(rotations, rotationUnits::rev, speed, velocityUnits::pct, false);
+  intake1.rotateTo(rotations, rotationUnits::rev, speed, velocityUnits::pct, false);
+  intake2.stop(brakeType::hold);
+
+  drive(10, 50, wait);
+}
+
+void intakeTowerOttake (float rotations, int speed, bool wait)
+{
+  moveRobotTimer(30, 5000);
+  rollers.rotateTo(rotations, rotationUnits::rev, 100, velocityUnits::pct, false);
+  intake2.rotateTo(rotations, rotationUnits::rev, speed, velocityUnits::pct, false);
+  intake1.rotateTo(rotations, rotationUnits::rev, 100, velocityUnits::pct, false);
+  
+}
 
 /*
 void pTurn(double degs) //P loop turn code
@@ -127,23 +165,30 @@ void pdTurn(double degrees) //PD loop turn code (better than the smartdrive and 
     int dt = 20;  // Recommended wait time in milliseconds
     double target = degrees; // In revolutions
     double error = target - Inertial.rotation();
-    double kP = .31;
-    double kD = .40;//still needs tweeking
+    double kP = .21;
+    double kD = .90;
     double prevError = error;
-    while (abs(error) > 1) // Allows +- 1 degree variance, don't reduce unless you know what you are doing
+    printf("Inertial: %f\n", Inertial.rotation());
+    //printf("Error: %f\n", error);
+    while (abs(error) > 0) // Allows +- 1 degree variance, don't reduce unless you know what you are doing
     {
       error = target - Inertial.rotation();
-      printf("Error: %f\n", kP*error);
+      //printf("Error: %f\n", error);
+      printf("KPError: %f\n", kP*error);
       double derivative = (error - prevError)/dt;
       printf("derivative: %f\n", kD*derivative);
-      double percent = kP * error + kD * derivative;
+      double percent = (kP * error + kD * derivative)+0.5;
       printf("Percent: %f\n", percent);
+      prevError = error;
       leftGroup.spin(directionType::rev, percent, pct);
       rightGroup.spin(directionType::fwd, percent, pct);
       task::sleep(dt);
-      prevError = error;
+      printf("Inertial: %f\n", Inertial.rotation());
+      printf("Error: %f\n", error);
     }
-    printf("done");
+    printf("done\n");
+    printf("Inertial: %f\n", Inertial.rotation());
+    printf("Error: %f\n", error);
     leftGroup.stop();
     rightGroup.stop();
     task::sleep(500);
@@ -184,23 +229,14 @@ void pre_auton(void) {
 /*                                                                           */
 /*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
-void loadBall(float rotations, int speed)
-{
-  
-  intake2.stop(brakeType::hold);
-  intake1.rotateTo(rotations, rotationUnits::rev, 100, velocityUnits::pct, false);
-  roller1.rotateTo(rotations, rotationUnits::rev, 100, velocityUnits::pct, false);
-  roller2.rotateTo(rotations, rotationUnits::rev, 100, velocityUnits::pct, true);
-  moveRobot(10, 10, 50);
-}
 
 void autonomous(void) {
   // ..........................................................................
   // Insert autonomous user code here.
   // ..........................................................................
   //pTurn(90);
-  pdTurn(90);
-  drive(2, 20);
+  pdTurn(-90);
+  //drive(2, 10, false);
   Controller1.Screen.setCursor(1,1);
   Controller1.Screen.clearLine();
   Controller1.Screen.print("Finished");
@@ -222,8 +258,21 @@ void usercontrol(void) {
     // This is the main execution loop for the user control program.
     // Each time through the loop your program should update motor + servo
     // values based on feedback from the joysticks.
-    leftGroup.spin(vex::directionType::fwd, (Controller1.Axis3.value() + Controller1.Axis1.value())*0.5, vex::velocityUnits::pct);
-    rightGroup.spin(vex::directionType::fwd, (Controller1.Axis3.value() - Controller1.Axis1.value())*0.5, vex::velocityUnits::pct);
+
+    Controller1.Screen.clearScreen();
+    Controller1.Screen.setCursor(1, 1);
+    Controller1.Screen.print("Temperature FR: %f",
+    FR.temperature(percentUnits::pct));
+    Controller1.Screen.setCursor(2, 1);
+    Controller1.Screen.print("Temperature FL: %f",
+    FL.temperature(percentUnits::pct));
+    Controller1.Screen.setCursor(3, 1);
+    Controller1.Screen.print("Temperature BR: %f",
+    BR.temperature(percentUnits::pct));
+
+
+    leftGroup.spin(vex::directionType::fwd, ((Controller1.Axis3.value()*0.75) + (Controller1.Axis1.value()*0.5)), vex::velocityUnits::pct);
+    rightGroup.spin(vex::directionType::fwd, ((Controller1.Axis3.value()*0.75) - (Controller1.Axis1.value()*0.5)), vex::velocityUnits::pct);
    
     if(Controller1.ButtonR1.pressing())
    {
