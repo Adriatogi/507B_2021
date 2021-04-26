@@ -1,12 +1,3 @@
-// ---- START VEXCODE CONFIGURED DEVICES ----
-// Robot Configuration:
-// [Name]               [Type]        [Port(s)]
-// ---- END VEXCODE CONFIGURED DEVICES ----
-// ---- START VEXCODE CONFIGURED DEVICES ----
-// Robot Configuration:
-// [Name]               [Type]        [Port(s)]
-// Inertial3            inertial      3               
-// ---- END VEXCODE CONFIGURED DEVICES ----
 /*----------------------------------------------------------------------------*/
 /*                                                                            */
 /*    Module:       main.cpp                                                  */
@@ -45,7 +36,8 @@ drivetrain driveTrain(leftGroup, rightGroup);
 
 controller Controller1;
 
-inertial Inertial(PORT7); // change port
+inertial Inertial(PORT7);
+optical Optical = optical(PORT10);
 
 /*---------------------------------------------------------------------------*/
 /*                          Pre-Autonomous Functions                         */
@@ -78,6 +70,28 @@ void moveRobotNoWait(float rotationLeft, float rotationRight, int speed) {
   false);
 }
 
+void moveRobotWait(float rotationLeft, float rotationRight, int speed) {
+FL.resetRotation();
+BL.resetRotation();
+FR.resetRotation();
+BR.resetRotation();
+
+FL.rotateTo(rotationLeft, rotationUnits::rev, speed, velocityUnits::pct,
+false);
+BL.rotateTo(rotationLeft, rotationUnits::rev, speed, velocityUnits::pct,
+false);
+FR.rotateTo(rotationRight, rotationUnits::rev, speed, velocityUnits::pct,
+false);
+BR.rotateTo(rotationRight, rotationUnits::rev, speed, velocityUnits::pct,
+true);
+
+FL.stop();
+BL.stop();
+FR.stop();
+BR.stop();
+
+}
+
 void moveRobotTimer(int speed, int ms) {
   FL.spin(directionType::fwd, speed, velocityUnits::pct);
   BL.spin(directionType::fwd, speed, velocityUnits::pct);
@@ -95,68 +109,19 @@ void moveRobotTimer(int speed, int ms) {
   BR.stop();
 }
 
-void loadBall(float rotations, int speed, bool wait)
+void loadSingleBall(float distanceTravel, int speed)
 {
-  intake1.resetRotation();
-  rollers.resetRotation();
-
-  rollers.rotateTo(rotations, rotationUnits::rev, speed, velocityUnits::pct, false);
-  intake1.rotateTo(rotations, rotationUnits::rev, speed, velocityUnits::pct, false);
+  rollers.spin(directionType::fwd, 100, velocityUnits::pct);
+  intake1.spin(directionType::fwd, 100, velocityUnits::pct);
   intake2.stop(brakeType::hold);
 
-  drive(10, 50, wait);
-}
+  drive(distanceTravel, speed, true);
 
-void intakeTowerOttake (float rotations, int speed, bool wait)
-{
-  moveRobotTimer(30, 5000);
-  rollers.rotateTo(rotations, rotationUnits::rev, 100, velocityUnits::pct, false);
-  intake2.rotateTo(rotations, rotationUnits::rev, speed, velocityUnits::pct, false);
-  intake1.rotateTo(rotations, rotationUnits::rev, 100, velocityUnits::pct, false);
-  
-}
+  rollers.stop();
+  intake1.stop();
+  intake2.stop();
 
-/*
-void pTurn(double degs) //P loop turn code
-{
-  Controller1.Screen.clearScreen();
-  Controller1.Screen.setCursor(1,1);
-  Controller1.Screen.print("Running PTurn");
-  if(Inertial.installed())
-  {
-    int dt = 20; // Wait time in milliseconds
-    double target = degs; // In degrees
-    double error = target - Inertial.rotation();
-    double kP = .11;
-    Controller1.Screen.clearScreen();
-    Controller1.Screen.setCursor(2,1);
-    Controller1.Screen.print("Checking PTurn");
-    printf("Percent: %f\n", error);
-    
-    printf("Error: %f\n", error);
-    while (abs(error) > 1) // Allows +- 1 degree variance, don't reduce unless you know what you are doing
-    {
-      printf("Error: %f\n", error);
-      Controller1.Screen.setCursor(3,1);
-      Controller1.Screen.clearLine();
-      error = target - Inertial.rotation();
-      double percent = kP * error + 4 * error / abs(error);
-      printf("Percent: %f\n", percent);
-      leftGroup.spin(directionType::rev, percent, pct);
-      rightGroup.spin(directionType::fwd, percent, pct);
-      vex::task::sleep(dt);
-    }
-    leftGroup.stop();
-    rightGroup.stop();
-  }
-  else
-  {
-    Controller1.Screen.clearScreen();
-    Controller1.Screen.setCursor(1,1);
-    Controller1.Screen.print("No Inertial Sensor Installed");
-  }
 }
-*/
 
 void pdTurn(double degrees) //PD loop turn code (better than the smartdrive and P loop methods once kP and kD are tuned properly)
 {
@@ -235,7 +200,7 @@ void autonomous(void) {
   // Insert autonomous user code here.
   // ..........................................................................
   //pTurn(90);
-  pdTurn(-90);
+  //pdTurn(-90);
   //drive(2, 10, false);
   Controller1.Screen.setCursor(1,1);
   Controller1.Screen.clearLine();
@@ -254,11 +219,12 @@ void autonomous(void) {
 
 void usercontrol(void) {
   // User control code here, inside the loop
+  Optical.setLight(ledState::off);
+
   while (1) {
     // This is the main execution loop for the user control program.
     // Each time through the loop your program should update motor + servo
     // values based on feedback from the joysticks.
-
     Controller1.Screen.clearScreen();
     Controller1.Screen.setCursor(1, 1);
     Controller1.Screen.print("Temperature FR: %f",
@@ -275,47 +241,51 @@ void usercontrol(void) {
     rightGroup.spin(vex::directionType::fwd, ((Controller1.Axis3.value()*0.75) - (Controller1.Axis1.value()*0.5)), vex::velocityUnits::pct);
    
     if(Controller1.ButtonR1.pressing())
-   {
+    {
      roller1.spin(directionType::fwd, 100, velocityUnits::pct);
      roller2.spin(directionType::fwd, 100, velocityUnits::pct);
-   }
-   else if(Controller1.ButtonR2.pressing())
-   {
+    }
+    else if(Controller1.ButtonR2.pressing())
+    {
      roller1.spin(directionType::rev, 100, velocityUnits::pct);
      roller2.spin(directionType::rev, 100, velocityUnits::pct);
-   }
-   else
-   {
+    }
+    else
+    {
      roller1.stop(brakeType::brake);
      roller2.stop(brakeType::brake);
-   }
+    }
 
-   if(Controller1.ButtonL1.pressing())
-   {
+    if(Controller1.ButtonL1.pressing())
+    {
      intake1.spin(directionType::fwd, 100, velocityUnits::pct);
      intake2.spin(directionType::fwd, 100, velocityUnits::pct);
-   }
-   else if(Controller1.ButtonL2.pressing())
-   {
+    }
+    else if(Controller1.ButtonL2.pressing())
+    {
      intake1.spin(directionType::rev, 100, velocityUnits::pct);
      intake2.spin(directionType::rev, 100, velocityUnits::pct);
-   }
-   else if(Controller1.ButtonY.pressing()) // Eject ball when there is one on top
-   {
+    }
+    else if(Controller1.ButtonY.pressing()) // Eject ball when there is one on top
+    {
      intake1.spin(directionType::fwd, 100, velocityUnits::pct);
      intake2.stop(brakeType::hold);
-   }
-   else if(Controller1.ButtonUp.pressing()) // eject ball when no ball on top
-   {
+    }
+    else if(Controller1.ButtonUp.pressing()) // eject ball when no ball on top
+    {
      intake1.spin(directionType::fwd, 100, velocityUnits::pct);
      intake2.spin(directionType::rev, 100, velocityUnits::pct);
-   }
-   else
-   {
+    }
+    else
+    {
      intake1.stop(brakeType::brake);
      intake2.stop(brakeType::brake);
-   }
-
+    }
+  
+    if(Controller1.ButtonA.pressing())
+    {
+      loadSingleBall(10, 20);
+    }
     wait(20, msec); // Sleep the task for a short amount of time to
                     // prevent wasted resources.
   }
