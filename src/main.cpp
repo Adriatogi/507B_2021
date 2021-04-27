@@ -39,6 +39,7 @@ controller Controller1;
 inertial Inertial(PORT7);
 optical Optical = optical(PORT10);
 
+
 /*---------------------------------------------------------------------------*/
 /*                          Pre-Autonomous Functions                         */
 /*                                                                           */
@@ -120,7 +121,30 @@ void loadSingleBall(float distanceTravel, int speed)
   rollers.stop();
   intake1.stop();
   intake2.stop();
+}
 
+void scoreBallsDeScoreTower() 
+{
+  /*
+  TODO Add a timer that if no red ball is detected after 2(prone to change) seconds
+  stops the top intake
+  Lower optical sensor below the current c-channel
+  */
+  rollers.spin(directionType::fwd, 80, velocityUnits::pct);
+  intake1.spin(directionType::fwd, 80, velocityUnits::pct);
+  intake2.spin(directionType::fwd, 80, velocityUnits::pct);
+  
+  while(Optical.color() != blue)
+  {
+
+  }
+
+  rollers.stop();
+  intake1.stop(brakeType::hold);
+  intake2.stop(brakeType::hold);
+  moveRobotWait(-2, -2, 50);
+  intake1.stop();
+  intake2.stop();
 }
 
 void pdTurn(double degrees) //PD loop turn code (better than the smartdrive and P loop methods once kP and kD are tuned properly)
@@ -229,12 +253,6 @@ void usercontrol(void) {
     Controller1.Screen.setCursor(1, 1);
     Controller1.Screen.print("Temperature FR: %f",
     FR.temperature(percentUnits::pct));
-    Controller1.Screen.setCursor(2, 1);
-    Controller1.Screen.print("Temperature FL: %f",
-    FL.temperature(percentUnits::pct));
-    Controller1.Screen.setCursor(3, 1);
-    Controller1.Screen.print("Temperature BR: %f",
-    BR.temperature(percentUnits::pct));
 
 
     leftGroup.spin(vex::directionType::fwd, ((Controller1.Axis3.value()*0.75) + (Controller1.Axis1.value()*0.5)), vex::velocityUnits::pct);
@@ -284,7 +302,7 @@ void usercontrol(void) {
   
     if(Controller1.ButtonA.pressing())
     {
-      loadSingleBall(10, 20);
+      scoreBallsDeScoreTower();
     }
     wait(20, msec); // Sleep the task for a short amount of time to
                     // prevent wasted resources.
