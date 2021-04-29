@@ -39,6 +39,8 @@ controller Controller1;
 inertial Inertial(PORT7);
 optical Optical = optical(PORT10);
 
+timer timer1;
+
 
 /*---------------------------------------------------------------------------*/
 /*                          Pre-Autonomous Functions                         */
@@ -53,6 +55,41 @@ optical Optical = optical(PORT10);
 void drive(double distanceInches, int speed, bool wait)
 {
   driveTrain.driveFor(directionType::fwd, distanceInches, distanceUnits::in, speed, velocityUnits::pct, wait); // wait to complete
+}
+
+void driveRobot(float totalDistance, int speed, bool wait) // testing needed
+{
+  float initialDistance = totalDistance *0.8;
+  float finalDistance = totalDistance * 0.2;
+  int finalSpeed = speed * 0.25;
+
+  FL.resetRotation();
+  BL.resetRotation();
+  FR.resetRotation();
+  BR.resetRotation();
+
+  FL.rotateTo(initialDistance, rotationUnits::rev, speed, velocityUnits::pct,
+  false);
+  BL.rotateTo(initialDistance, rotationUnits::rev, speed, velocityUnits::pct,
+  false);
+  FR.rotateTo(initialDistance, rotationUnits::rev, speed, velocityUnits::pct,
+  false);
+  BR.rotateTo(initialDistance, rotationUnits::rev, speed, velocityUnits::pct,
+  true);
+
+  FL.rotateTo(finalDistance, rotationUnits::rev, finalSpeed, velocityUnits::pct,
+  false);
+  BL.rotateTo(finalDistance, rotationUnits::rev, finalSpeed, velocityUnits::pct,
+  false);
+  FR.rotateTo(finalDistance, rotationUnits::rev, finalSpeed, velocityUnits::pct,
+  false);
+  BR.rotateTo(finalDistance, rotationUnits::rev, finalSpeed, velocityUnits::pct,
+  true);
+
+  FL.stop();
+  BL.stop();
+  FR.stop();
+  BR.stop();
 }
 
 void moveRobotNoWait(float rotationLeft, float rotationRight, int speed) {
@@ -125,18 +162,15 @@ void loadSingleBall(float distanceTravel, int speed)
 
 void scoreBallsDeScoreTower() 
 {
-  /*
-  TODO Add a timer that if no red ball is detected after 2(prone to change) seconds
-  stops the top intake
-  Lower optical sensor below the current c-channel
-  */
-  rollers.spin(directionType::fwd, 80, velocityUnits::pct);
-  intake1.spin(directionType::fwd, 80, velocityUnits::pct);
-  intake2.spin(directionType::fwd, 80, velocityUnits::pct);
-  
-  while(Optical.color() != blue)
-  {
+  timer1.clear();
 
+  rollers.spin(directionType::fwd, 100, velocityUnits::pct);
+  intake1.spin(directionType::fwd, 100, velocityUnits::pct);
+  intake2.spin(directionType::fwd, 100, velocityUnits::pct);
+  
+  while((Optical.color() != blue)&&(timer1<3000))
+  { 
+    
   }
 
   rollers.stop();
@@ -147,6 +181,26 @@ void scoreBallsDeScoreTower()
   intake2.stop();
 }
 
+void outtakeBalls()
+{
+  timer1.clear();
+
+  rollers.spin(directionType::fwd, 100, velocityUnits::pct);
+  intake1.spin(directionType::fwd, 100, velocityUnits::pct);
+  intake2.spin(directionType::rev, 100, velocityUnits::pct);
+
+  while(timer1<4000)
+  { 
+  }
+  while((Optical.color() == blue))
+  {
+  }
+
+  rollers.stop();
+  intake1.stop();
+  intake2.stop();
+
+}
 void pdTurn(double degrees) //PD loop turn code (better than the smartdrive and P loop methods once kP and kD are tuned properly)
 {
   if(Inertial.installed())
@@ -226,6 +280,7 @@ void autonomous(void) {
   //pTurn(90);
   //pdTurn(-90);
   //drive(2, 10, false);
+  
   Controller1.Screen.setCursor(1,1);
   Controller1.Screen.clearLine();
   Controller1.Screen.print("Finished");
