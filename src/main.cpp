@@ -59,9 +59,9 @@ void drive(double distanceInches, int speed, bool wait)
 
 void driveRobot(float totalDistance, int speed, bool wait) // testing needed
 {
-  float initialDistance = totalDistance *0.8;
-  float finalDistance = totalDistance * 0.2;
-  int finalSpeed = speed * 0.25;
+  float initialDistance = totalDistance *0.9;
+  float finalDistance =  totalDistance;
+  int finalSpeed = 20;
 
   FL.resetRotation();
   BL.resetRotation();
@@ -76,7 +76,9 @@ void driveRobot(float totalDistance, int speed, bool wait) // testing needed
   false);
   BR.rotateTo(initialDistance, rotationUnits::rev, speed, velocityUnits::pct,
   true);
-
+  printf("1st part done \n");
+  printf("%d \n", finalSpeed);
+  printf("%f \n", finalDistance);
   FL.rotateTo(finalDistance, rotationUnits::rev, finalSpeed, velocityUnits::pct,
   false);
   BL.rotateTo(finalDistance, rotationUnits::rev, finalSpeed, velocityUnits::pct,
@@ -86,6 +88,7 @@ void driveRobot(float totalDistance, int speed, bool wait) // testing needed
   BR.rotateTo(finalDistance, rotationUnits::rev, finalSpeed, velocityUnits::pct,
   true);
 
+  printf("Done\n");
   FL.stop();
   BL.stop();
   FR.stop();
@@ -147,13 +150,21 @@ void moveRobotTimer(int speed, int ms) {
   BR.stop();
 }
 
-void loadSingleBall(float distanceTravel, int speed)
+void moveRobotSpin(int speed)
+{
+  FL.spin(directionType::fwd, speed, velocityUnits::pct);
+  BL.spin(directionType::fwd, speed, velocityUnits::pct);
+  FR.spin(directionType::fwd, speed, velocityUnits::pct);
+  BR.spin(directionType::fwd, speed, velocityUnits::pct);
+}
+
+void loadSingleBall(float revs, int speed)
 {
   rollers.spin(directionType::fwd, 100, velocityUnits::pct);
   intake1.spin(directionType::fwd, 100, velocityUnits::pct);
   intake2.stop(brakeType::hold);
 
-  drive(distanceTravel, speed, true);
+  driveRobot(revs, speed, true);
 
   rollers.stop();
   intake1.stop();
@@ -167,8 +178,9 @@ void scoreBallsDeScoreTower()
   rollers.spin(directionType::fwd, 100, velocityUnits::pct);
   intake1.spin(directionType::fwd, 100, velocityUnits::pct);
   intake2.spin(directionType::fwd, 100, velocityUnits::pct);
+  moveRobotSpin(15);
   
-  while((Optical.color() != blue)&&(timer1<3000))
+  while((Optical.color() != blue)&&(timer1<4000))
   { 
     
   }
@@ -176,7 +188,7 @@ void scoreBallsDeScoreTower()
   rollers.stop();
   intake1.stop(brakeType::hold);
   intake2.stop(brakeType::hold);
-  moveRobotWait(-2, -2, 50);
+  moveRobotWait(-1, -1, 50);
   intake1.stop();
   intake2.stop();
 }
@@ -189,7 +201,7 @@ void outtakeBalls()
   intake1.spin(directionType::fwd, 100, velocityUnits::pct);
   intake2.spin(directionType::rev, 100, velocityUnits::pct);
 
-  while(timer1<4000)
+  while(timer1<2000)
   { 
   }
   while((Optical.color() == blue))
@@ -281,6 +293,16 @@ void autonomous(void) {
   //pdTurn(-90);
   //drive(2, 10, false);
   
+  //drive forward
+  intake2.spin(directionType::fwd, 50, velocityUnits::pct);
+  task::sleep(500);
+  intake2.stop();
+  driveRobot(2, 50, true);
+  loadSingleBall(1, 50);
+  pdTurn(80);
+
+  //go forward pick up second ball
+  //turn to corner 
   Controller1.Screen.setCursor(1,1);
   Controller1.Screen.clearLine();
   Controller1.Screen.print("Finished");
@@ -299,19 +321,20 @@ void autonomous(void) {
 void usercontrol(void) {
   // User control code here, inside the loop
   Optical.setLight(ledState::off);
+  Controller1.Screen.clearScreen();
 
   while (1) {
     // This is the main execution loop for the user control program.
     // Each time through the loop your program should update motor + servo
     // values based on feedback from the joysticks.
-    Controller1.Screen.clearScreen();
     Controller1.Screen.setCursor(1, 1);
     Controller1.Screen.print("Temperature FR: %f",
     FR.temperature(percentUnits::pct));
+    printf("Inertial: %f\n", Inertial.rotation());
 
 
-    leftGroup.spin(vex::directionType::fwd, ((Controller1.Axis3.value()*0.75) + (Controller1.Axis1.value()*0.5)), vex::velocityUnits::pct);
-    rightGroup.spin(vex::directionType::fwd, ((Controller1.Axis3.value()*0.75) - (Controller1.Axis1.value()*0.5)), vex::velocityUnits::pct);
+    leftGroup.spin(vex::directionType::fwd, ((Controller1.Axis3.value()*0.75) + (Controller1.Axis1.value()*0.2)), vex::velocityUnits::pct);
+    rightGroup.spin(vex::directionType::fwd, ((Controller1.Axis3.value()*0.75) - (Controller1.Axis1.value()*0.2)), vex::velocityUnits::pct);
    
     if(Controller1.ButtonR1.pressing())
     {
@@ -358,6 +381,7 @@ void usercontrol(void) {
     if(Controller1.ButtonA.pressing())
     {
       scoreBallsDeScoreTower();
+      //driveRobot(2, 50, true);
     }
     wait(20, msec); // Sleep the task for a short amount of time to
                     // prevent wasted resources.
