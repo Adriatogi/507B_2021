@@ -158,12 +158,13 @@ void moveRobotSpin(int speed)
   BR.spin(directionType::fwd, speed, velocityUnits::pct);
 }
 
-void loadSingleBall(float revs, int speed)
+void loadSingleBall(float revs, int speed)// stop spinning if it also detects a blue ball in the inside, but keep driving
 {
   rollers.spin(directionType::fwd, 100, velocityUnits::pct);
-  intake1.spin(directionType::fwd, 100, velocityUnits::pct);
+  intake1.spin(directionType::fwd, 80, velocityUnits::pct);
   intake2.stop(brakeType::hold);
-
+  
+  
   driveRobot(revs, speed, true);
 
   rollers.stop();
@@ -171,24 +172,25 @@ void loadSingleBall(float revs, int speed)
   intake2.stop();
 }
 
-void scoreBallsDeScoreTower() 
+void scoreBallsDeScoreTower() // TODO Problem: add some delay to spinners?
 {
   timer1.clear();
 
   rollers.spin(directionType::fwd, 100, velocityUnits::pct);
+  moveRobotSpin(20);
+  task::sleep(680);
   intake1.spin(directionType::fwd, 100, velocityUnits::pct);
   intake2.spin(directionType::fwd, 100, velocityUnits::pct);
-  moveRobotSpin(15);
+  moveRobotSpin(0);
   
   while((Optical.color() != blue)&&(timer1<4000))
   { 
-    
   }
 
   rollers.stop();
   intake1.stop(brakeType::hold);
   intake2.stop(brakeType::hold);
-  moveRobotWait(-1, -1, 50);
+  moveRobotWait(-1, -1, 30);
   intake1.stop();
   intake2.stop();
 }
@@ -217,12 +219,20 @@ void pdTurn(double degrees) //PD loop turn code (better than the smartdrive and 
 {
   if(Inertial.installed())
   {
+    printf("---------------------------------------------------");
     int dt = 20;  // Recommended wait time in milliseconds
     double target = degrees; // In revolutions
     double error = target - Inertial.rotation();
     double kP = .21;
     double kD = .90;
     double prevError = error;
+    double backUpSpeed = 1.3;
+
+    if(error<0)
+    {
+      backUpSpeed*=-1;
+    }
+
     printf("Inertial: %f\n", Inertial.rotation());
     //printf("Error: %f\n", error);
     while (abs(error) > 0) // Allows +- 1 degree variance, don't reduce unless you know what you are doing
@@ -232,11 +242,11 @@ void pdTurn(double degrees) //PD loop turn code (better than the smartdrive and 
       printf("KPError: %f\n", kP*error);
       double derivative = (error - prevError)/dt;
       printf("derivative: %f\n", kD*derivative);
-      double percent = (kP * error + kD * derivative)+0.5;
+      double percent = (kP * error + kD * derivative)+ backUpSpeed;
       printf("Percent: %f\n", percent);
       prevError = error;
-      leftGroup.spin(directionType::rev, percent, pct);
-      rightGroup.spin(directionType::fwd, percent, pct);
+      leftGroup.spin(directionType::fwd, percent, pct);
+      rightGroup.spin(directionType::rev, percent, pct);
       task::sleep(dt);
       printf("Inertial: %f\n", Inertial.rotation());
       printf("Error: %f\n", error);
@@ -244,9 +254,9 @@ void pdTurn(double degrees) //PD loop turn code (better than the smartdrive and 
     printf("done\n");
     printf("Inertial: %f\n", Inertial.rotation());
     printf("Error: %f\n", error);
-    leftGroup.stop();
-    rightGroup.stop();
-    task::sleep(500);
+    leftGroup.stop(brakeType::hold);
+    rightGroup.stop(brakeType::hold);
+    task::sleep(250); // to stop momentum
   }
   else
   {
@@ -254,6 +264,17 @@ void pdTurn(double degrees) //PD loop turn code (better than the smartdrive and 
     Controller1.Screen.setCursor(1,1);
     Controller1.Screen.print("No Inertial Sensor Installed");
   }
+}
+
+void startUp()
+{
+  intake2.spin(directionType::fwd, 50, velocityUnits::pct);
+  roller1.spin(directionType::fwd, 50, velocityUnits::pct);
+  roller2.spin(directionType::fwd, 50, velocityUnits::pct);
+  task::sleep(1000);
+  roller1.stop();
+  roller2.stop();
+  intake2.stop();
 }
 
 void pre_auton(void) {
@@ -294,12 +315,21 @@ void autonomous(void) {
   //drive(2, 10, false);
   
   //drive forward
-  intake2.spin(directionType::fwd, 50, velocityUnits::pct);
-  task::sleep(500);
-  intake2.stop();
-  driveRobot(2, 50, true);
-  loadSingleBall(1, 50);
+  startUp();
+  loadSingleBall(2, 50);
   pdTurn(80);
+  driveRobot(0.77, 35, true);
+  scoreBallsDeScoreTower();
+  driveRobot(-1.1, 35, true);
+  pdTurn(213); 
+  outtakeBalls();
+  driveRobot(1.25, 35, true);
+  loadSingleBall(2.75, 50);
+  pdTurn(160);
+  driveRobot(2.3, 20, true);
+  scoreBallsDeScoreTower();
+
+
 
   //go forward pick up second ball
   //turn to corner 
