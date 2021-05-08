@@ -52,6 +52,29 @@ timer timer1;
 /*  not every time that the robot is disabled.                               */
 /*---------------------------------------------------------------------------*/
 
+int pickUpRedTask() 
+{
+
+  while(Optical.color() != red) 
+  {
+  }
+
+  rollers.stop(brakeType::hold);
+  intake1.stop(brakeType::hold);
+  return(0);
+}
+
+int pickUpBlueTask()
+{
+  while(Optical.color() != blue) 
+  {
+  }
+
+  rollers.stop(brakeType::hold);
+  intake1.stop(brakeType::hold);
+  return(0);
+}
+
 void drive(double distanceInches, int speed, bool wait)
 {
   driveTrain.driveFor(directionType::fwd, distanceInches, distanceUnits::in, speed, velocityUnits::pct, wait); // wait to complete
@@ -76,9 +99,6 @@ void driveRobot(float totalDistance, int speed, bool wait) // testing needed
   false);
   BR.rotateTo(initialDistance, rotationUnits::rev, speed, velocityUnits::pct,
   true);
-  printf("1st part done \n");
-  printf("%d \n", finalSpeed);
-  printf("%f \n", finalDistance);
   FL.rotateTo(finalDistance, rotationUnits::rev, finalSpeed, velocityUnits::pct,
   false);
   BL.rotateTo(finalDistance, rotationUnits::rev, finalSpeed, velocityUnits::pct,
@@ -86,7 +106,7 @@ void driveRobot(float totalDistance, int speed, bool wait) // testing needed
   FR.rotateTo(finalDistance, rotationUnits::rev, finalSpeed, velocityUnits::pct,
   false);
   BR.rotateTo(finalDistance, rotationUnits::rev, finalSpeed, velocityUnits::pct,
-  true);
+  wait);
 
   printf("Done\n");
   FL.stop();
@@ -112,24 +132,24 @@ void moveRobotNoWait(float rotationLeft, float rotationRight, int speed) {
 }
 
 void moveRobotWait(float rotationLeft, float rotationRight, int speed) {
-FL.resetRotation();
-BL.resetRotation();
-FR.resetRotation();
-BR.resetRotation();
+  FL.resetRotation();
+  BL.resetRotation();
+  FR.resetRotation();
+  BR.resetRotation();
 
-FL.rotateTo(rotationLeft, rotationUnits::rev, speed, velocityUnits::pct,
-false);
-BL.rotateTo(rotationLeft, rotationUnits::rev, speed, velocityUnits::pct,
-false);
-FR.rotateTo(rotationRight, rotationUnits::rev, speed, velocityUnits::pct,
-false);
-BR.rotateTo(rotationRight, rotationUnits::rev, speed, velocityUnits::pct,
-true);
+  FL.rotateTo(rotationLeft, rotationUnits::rev, speed, velocityUnits::pct,
+  false);
+  BL.rotateTo(rotationLeft, rotationUnits::rev, speed, velocityUnits::pct,
+  false);
+  FR.rotateTo(rotationRight, rotationUnits::rev, speed, velocityUnits::pct,
+  false);
+  BR.rotateTo(rotationRight, rotationUnits::rev, speed, velocityUnits::pct,
+  true);
 
-FL.stop();
-BL.stop();
-FR.stop();
-BR.stop();
+  FL.stop();
+  BL.stop();
+  FR.stop();
+  BR.stop();
 
 }
 
@@ -163,29 +183,41 @@ void loadSingleBall(float revs, int speed)// stop spinning if it also detects a 
   rollers.spin(directionType::fwd, 100, velocityUnits::pct);
   intake1.spin(directionType::fwd, 80, velocityUnits::pct);
   intake2.stop(brakeType::hold);
-  
-  
+
+  task myTask = task(pickUpRedTask);
+
   driveRobot(revs, speed, true);
 
+  myTask.stop();
+  
   rollers.stop();
   intake1.stop();
   intake2.stop();
 }
 
-void scoreBallsDeScoreTower() // TODO Problem: add some delay to spinners?
+void scoreBallsDeScoreTower() // TODO when it detects a blue ball, stop spinning
 {
+
   timer1.clear();
+
 
   rollers.spin(directionType::fwd, 100, velocityUnits::pct);
   moveRobotSpin(20);
-  task::sleep(680);
+  task::sleep(500);
+
   intake1.spin(directionType::fwd, 100, velocityUnits::pct);
   intake2.spin(directionType::fwd, 100, velocityUnits::pct);
+  task::sleep(500);
+
+  task myTask = task(pickUpBlueTask);
   moveRobotSpin(0);
+
+  task::sleep(1000);
+  myTask.stop();
   
-  while((Optical.color() != blue)&&(timer1<4000))
-  { 
-  }
+  //while((Optical.color() != blue)&&(timer1<4000))
+  //{ 
+  //}
 
   rollers.stop();
   intake1.stop(brakeType::hold);
@@ -203,7 +235,7 @@ void outtakeBalls()
   intake1.spin(directionType::fwd, 100, velocityUnits::pct);
   intake2.spin(directionType::rev, 100, velocityUnits::pct);
 
-  while(timer1<2000)
+  while(timer1<3000)
   { 
   }
   while((Optical.color() == blue))
@@ -277,6 +309,7 @@ void startUp()
   intake2.stop();
 }
 
+
 void pre_auton(void) {
   // Initializing Robot Configuration. DO NOT REMOVE!
   vexcodeInit();
@@ -316,15 +349,14 @@ void autonomous(void) {
   
   //drive forward
   startUp();
-  loadSingleBall(2, 50);
+  loadSingleBall(2.2, 50);
   pdTurn(80);
   driveRobot(0.77, 35, true);
   scoreBallsDeScoreTower();
-  driveRobot(-1.1, 35, true);
-  pdTurn(213); 
+  driveRobot(-1.75, 35, true);
+  pdTurn(203);
   outtakeBalls();
-  driveRobot(1.25, 35, true);
-  loadSingleBall(2.75, 50);
+  loadSingleBall(3.25, 50);
   pdTurn(160);
   driveRobot(2.3, 20, true);
   scoreBallsDeScoreTower();
@@ -412,6 +444,7 @@ void usercontrol(void) {
     {
       scoreBallsDeScoreTower();
       //driveRobot(2, 50, true);
+      //loadSingleBall(5, 35);
     }
     wait(20, msec); // Sleep the task for a short amount of time to
                     // prevent wasted resources.
