@@ -52,24 +52,29 @@ timer timer1;
 /*  not every time that the robot is disabled.                               */
 /*---------------------------------------------------------------------------*/
 
-int pickUpRedTask() 
+int pickUpRedTask() // pick up red ball task
 {
 
+  //while the red ball isnt picked up, do nothing
   while(Optical.color() != red) 
   {
   }
 
+  //Stop rollers when ball is picked up
   rollers.stop(brakeType::hold);
   intake1.stop(brakeType::hold);
   return(0);
 }
 
-int pickUpBlueTask()
+int pickUpBlueTask() // pick up blue ball task
 {
+
+  //while the blue isnt picked, do nothing
   while(Optical.color() != blue) 
   {
   }
 
+  //stop rollers when ball is picked up
   rollers.stop(brakeType::hold);
   intake1.stop(brakeType::hold);
   return(0);
@@ -80,7 +85,7 @@ void drive(double distanceInches, int speed, bool wait)
   driveTrain.driveFor(directionType::fwd, distanceInches, distanceUnits::in, speed, velocityUnits::pct, wait); // wait to complete
 }
 
-void driveRobot(float totalDistance, int speed, bool wait) // testing needed
+void driveRobot(float totalDistance, int speed, bool wait) // Slows it down towards the end to avoid overshooting
 {
   float initialDistance = totalDistance *0.9;
   float finalDistance =  totalDistance;
@@ -153,7 +158,7 @@ void moveRobotWait(float rotationLeft, float rotationRight, int speed) {
 
 }
 
-void moveRobotTimer(int speed, int ms) {
+void moveRobotTimer(int speed, int ms) { // moves on a timer
   FL.spin(directionType::fwd, speed, velocityUnits::pct);
   BL.spin(directionType::fwd, speed, velocityUnits::pct);
   FR.spin(directionType::fwd, speed, velocityUnits::pct);
@@ -170,7 +175,7 @@ void moveRobotTimer(int speed, int ms) {
   BR.stop();
 }
 
-void moveRobotSpin(int speed)
+void moveRobotSpin(int speed) // just spin motors
 {
   FL.spin(directionType::fwd, speed, velocityUnits::pct);
   BL.spin(directionType::fwd, speed, velocityUnits::pct);
@@ -195,23 +200,28 @@ void loadSingleBall(float revs, int speed)// stop spinning if it also detects a 
   intake2.stop();
 }
 
-void scoreBallsDeScoreTower() // TODO when it detects a blue ball, stop spinning
+void scoreBallsDeScoreTower() //TODO maybe delay the start of the task even more 
+//so it makes sure the red ball atleast had the power of the bottom intake? Idk 
+//seems to work most of the time still
 {
 
   timer1.clear();
 
-
+  //move forward and spin rolers 
   rollers.spin(directionType::fwd, 100, velocityUnits::pct);
   moveRobotSpin(20);
   task::sleep(500);
 
+  //start scoring
   intake1.spin(directionType::fwd, 100, velocityUnits::pct);
   intake2.spin(directionType::fwd, 100, velocityUnits::pct);
   task::sleep(500);
 
+  //stop moving robot and if blue ball detected, stop rollers and bottom intake
   task myTask = task(pickUpBlueTask);
   moveRobotSpin(0);
 
+  //top intake will keep going for one second to score red ball
   task::sleep(1000);
   myTask.stop();
   
@@ -222,7 +232,7 @@ void scoreBallsDeScoreTower() // TODO when it detects a blue ball, stop spinning
   rollers.stop();
   intake1.stop(brakeType::hold);
   intake2.stop(brakeType::hold);
-  moveRobotWait(-1, -1, 30);
+  task::sleep(100); // to stop momentum of intakes
   intake1.stop();
   intake2.stop();
 }
@@ -231,15 +241,14 @@ void outtakeBalls()
 {
   timer1.clear();
 
+  //start shooting them out
   rollers.spin(directionType::fwd, 100, velocityUnits::pct);
   intake1.spin(directionType::fwd, 100, velocityUnits::pct);
   intake2.spin(directionType::rev, 100, velocityUnits::pct);
 
-  while(timer1<3000)
+  //run for atleast three seconds and make sure there is no detected blue ball
+  while(timer1<3000 || (Optical.color() == blue))
   { 
-  }
-  while((Optical.color() == blue))
-  {
   }
 
   rollers.stop();
@@ -353,12 +362,12 @@ void autonomous(void) {
   pdTurn(80);
   driveRobot(0.77, 35, true);
   scoreBallsDeScoreTower();
-  driveRobot(-1.75, 35, true);
+  driveRobot(-2.75, 35, true);
   pdTurn(203);
   outtakeBalls();
   loadSingleBall(3.25, 50);
   pdTurn(160);
-  driveRobot(2.3, 20, true);
+  driveRobot(2.3, 35, true);
   scoreBallsDeScoreTower();
 
 
