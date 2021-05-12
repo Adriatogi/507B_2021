@@ -200,6 +200,19 @@ void loadSingleBall(float revs, int speed)// stop spinning if it also detects a 
   intake2.stop();
 }
 
+void loadDoubleBall(float revs, int speed)
+{
+  rollers.spin(directionType::fwd, 100, velocityUnits::pct);
+  intake1.spin(directionType::fwd, 80, velocityUnits::pct);
+  intake2.stop(brakeType::hold);
+
+  driveRobot(revs, speed, true);
+
+  rollers.stop();
+  intake1.stop();
+  intake2.stop();
+}
+
 void scoreBallsDeScoreTower() //TODO maybe delay the start of the task even more 
 //so it makes sure the red ball atleast had the power of the bottom intake? Idk 
 //seems to work most of the time still
@@ -360,7 +373,7 @@ void autonomous(void) {
   startUp();
   loadSingleBall(2.2, 50);
   pdTurn(80);
-  driveRobot(0.77, 35, true);
+  driveRobot(0.75, 35, true);
   scoreBallsDeScoreTower();
   driveRobot(-2.75, 35, true);
   pdTurn(203);
@@ -369,8 +382,13 @@ void autonomous(void) {
   pdTurn(160);
   driveRobot(2.3, 35, true);
   scoreBallsDeScoreTower();
-
-
+  driveRobot(-2.75, 35, true);
+  pdTurn(298);
+  outtakeBalls();
+  loadSingleBall(1.05, 35);
+  pdTurn(206);
+  loadDoubleBall(0.5, 35);
+  scoreBallsDeScoreTower();
 
   //go forward pick up second ball
   //turn to corner 
@@ -451,8 +469,10 @@ void usercontrol(void) {
   
     if(Controller1.ButtonA.pressing())
     {
-      scoreBallsDeScoreTower();
-      //driveRobot(2, 50, true);
+      //drive(36, 50, true);
+      driveRobot(4, 35, true);
+      //scoreBallsDeScoreTower();
+      //driveRobot(-2, 50, true);
       //loadSingleBall(5, 35);
     }
     wait(20, msec); // Sleep the task for a short amount of time to
