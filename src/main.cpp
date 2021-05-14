@@ -25,7 +25,7 @@ motor BL(PORT17, gearSetting::ratio18_1, true);
 motor BR(PORT15, gearSetting::ratio18_1, false);
 motor roller1(PORT14, gearSetting::ratio6_1, true);
 motor roller2(PORT20,gearSetting::ratio6_1, false);
-motor intake1(PORT13, gearSetting::ratio6_1, true);
+motor intake1(PORT13, gearSetting::ratio18_1, true);
 motor intake2 (PORT2, gearSetting::ratio6_1, true);
 
 
@@ -62,6 +62,8 @@ int pickUpRedTask() // pick up red ball task
 
   //Stop rollers when ball is picked up
   rollers.stop(brakeType::hold);
+  intake1.spin(directionType::fwd, -40, velocityUnits::pct);
+  task::sleep(500);
   intake1.stop(brakeType::hold);
   return(0);
 }
@@ -223,16 +225,16 @@ void scoreBallsDeScoreTower() //TODO maybe delay the start of the task even more
   //move forward and spin rolers 
   rollers.spin(directionType::fwd, 100, velocityUnits::pct);
   moveRobotSpin(20);
-  task::sleep(500);
+  task::sleep(900);
 
   //start scoring
+  moveRobotSpin(0);
   intake1.spin(directionType::fwd, 100, velocityUnits::pct);
   intake2.spin(directionType::fwd, 100, velocityUnits::pct);
   task::sleep(500);
 
   //stop moving robot and if blue ball detected, stop rollers and bottom intake
   task myTask = task(pickUpBlueTask);
-  moveRobotSpin(0);
 
   //top intake will keep going for one second to score red ball
   task::sleep(1000);
@@ -310,7 +312,7 @@ void pdTurn(double degrees) //PD loop turn code (better than the smartdrive and 
     printf("Error: %f\n", error);
     leftGroup.stop(brakeType::hold);
     rightGroup.stop(brakeType::hold);
-    task::sleep(250); // to stop momentum
+    task::sleep(1000); // to stop momentum
   }
   else
   {
@@ -373,22 +375,25 @@ void autonomous(void) {
   startUp();
   loadSingleBall(2.2, 50);
   pdTurn(80);
-  driveRobot(0.75, 35, true);
+  driveRobot(0.73, 35, true);
   scoreBallsDeScoreTower();
   driveRobot(-2.75, 35, true);
-  pdTurn(203);
+  pdTurn(205);
   outtakeBalls();
-  loadSingleBall(3.25, 50);
-  pdTurn(160);
-  driveRobot(2.3, 35, true);
+  loadSingleBall(3.80, 40);
+  pdTurn(156);
+  driveRobot(2.1, 20, true);
   scoreBallsDeScoreTower();
-  driveRobot(-2.75, 35, true);
-  pdTurn(298);
+  driveRobot(-3, 35, true);
+  pdTurn(310);
   outtakeBalls();
-  loadSingleBall(1.05, 35);
+  loadSingleBall(1.3, 35);
   pdTurn(206);
-  loadDoubleBall(0.5, 35);
+  loadDoubleBall(1.5, 35);
   scoreBallsDeScoreTower();
+  driveRobot(-2, 20, true);
+  pdTurn(310);
+  outtakeBalls();
 
   //go forward pick up second ball
   //turn to corner 
@@ -470,10 +475,10 @@ void usercontrol(void) {
     if(Controller1.ButtonA.pressing())
     {
       //drive(36, 50, true);
-      driveRobot(4, 35, true);
+      //driveRobot(4, 35, true);
       //scoreBallsDeScoreTower();
       //driveRobot(-2, 50, true);
-      //loadSingleBall(5, 35);
+      loadSingleBall(3, 35);
     }
     wait(20, msec); // Sleep the task for a short amount of time to
                     // prevent wasted resources.
