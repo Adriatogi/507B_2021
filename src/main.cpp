@@ -87,6 +87,29 @@ void drive(double distanceInches, int speed, bool wait)
   driveTrain.driveFor(directionType::fwd, distanceInches, distanceUnits::in, speed, velocityUnits::pct, wait); // wait to complete
 }
 
+void testDrive(float totalDistance, int speed, bool wait)
+{
+  float initialDistance = totalDistance *0.9;
+  float finalDistance =  totalDistance;
+  int finalSpeed = 20;
+
+  leftGroup.resetRotation();
+  rightGroup.resetRotation();
+
+  leftGroup.rotateTo(initialDistance, rotationUnits::rev, speed, velocityUnits::pct,
+  false);
+  rightGroup.rotateTo(initialDistance, rotationUnits::rev, speed, velocityUnits::pct,
+  true);
+  leftGroup.rotateTo(finalDistance, rotationUnits::rev, finalSpeed, velocityUnits::pct,
+  false);
+  rightGroup.rotateTo(finalDistance, rotationUnits::rev, finalSpeed, velocityUnits::pct,
+  wait);
+
+  printf("Done\n");
+  leftGroup.stop();
+  rightGroup.stop();
+
+}
 void driveRobot(float totalDistance, int speed, bool wait) // Slows it down towards the end to avoid overshooting
 {
   float initialDistance = totalDistance *0.9;
@@ -100,11 +123,11 @@ void driveRobot(float totalDistance, int speed, bool wait) // Slows it down towa
 
   FL.rotateTo(initialDistance, rotationUnits::rev, speed, velocityUnits::pct,
   false);
-  BL.rotateTo(initialDistance, rotationUnits::rev, speed, velocityUnits::pct,
+  BR.rotateTo(initialDistance, rotationUnits::rev, speed, velocityUnits::pct,
   false);
   FR.rotateTo(initialDistance, rotationUnits::rev, speed, velocityUnits::pct,
   false);
-  BR.rotateTo(initialDistance, rotationUnits::rev, speed, velocityUnits::pct,
+  BL.rotateTo(initialDistance, rotationUnits::rev, speed, velocityUnits::pct,
   true);
   FL.rotateTo(finalDistance, rotationUnits::rev, finalSpeed, velocityUnits::pct,
   false);
@@ -202,10 +225,27 @@ void loadSingleBall(float revs, int speed)// stop spinning if it also detects a 
   intake2.stop();
 }
 
-void loadDoubleBall(float revs, int speed)
+void loadSingleBallTest(float revs, int speed)// stop spinning if it also detects a blue ball in the inside, but keep driving
 {
   rollers.spin(directionType::fwd, 100, velocityUnits::pct);
   intake1.spin(directionType::fwd, 80, velocityUnits::pct);
+  intake2.stop(brakeType::hold);
+
+  task myTask = task(pickUpRedTask);
+
+  testDrive(revs, speed, true);
+
+  myTask.stop();
+  
+  rollers.stop();
+  intake1.stop();
+  intake2.stop();
+}
+
+void loadDoubleBall(float revs, int speed)
+{
+  rollers.spin(directionType::fwd, 100, velocityUnits::pct);
+  //intake1.spin(directionType::fwd, 80, velocityUnits::pct);
   intake2.stop(brakeType::hold);
 
   driveRobot(revs, speed, true);
@@ -262,15 +302,15 @@ void outtakeBalls()
   intake2.spin(directionType::rev, 100, velocityUnits::pct);
 
   //run for atleast three seconds and make sure there is no detected blue ball
-  while(timer1<3000 || (Optical.color() == blue))
+  while(timer1<2500 || (Optical.color() == blue))
   { 
   }
 
   rollers.stop();
   intake1.stop();
   intake2.stop();
-
 }
+
 void pdTurn(double degrees) //PD loop turn code (better than the smartdrive and P loop methods once kP and kD are tuned properly)
 {
   if(Inertial.installed())
@@ -312,7 +352,7 @@ void pdTurn(double degrees) //PD loop turn code (better than the smartdrive and 
     printf("Error: %f\n", error);
     leftGroup.stop(brakeType::hold);
     rightGroup.stop(brakeType::hold);
-    task::sleep(1000); // to stop momentum
+    task::sleep(250); // to stop momentum
   }
   else
   {
@@ -367,36 +407,44 @@ void autonomous(void) {
   // ..........................................................................
   // Insert autonomous user code here.
   // ..........................................................................
-  //pTurn(90);
-  //pdTurn(-90);
-  //drive(2, 10, false);
-  
-  //drive forward
+
   startUp();
   loadSingleBall(2.2, 50);
-  pdTurn(80);
-  driveRobot(0.73, 35, true);
-  scoreBallsDeScoreTower();
+  pdTurn(77);
+  driveRobot(0.71, 35, true);
+  scoreBallsDeScoreTower(); // first conrner
   driveRobot(-2.75, 35, true);
   pdTurn(205);
   outtakeBalls();
-  loadSingleBall(3.80, 40);
+  loadSingleBall(3.75, 40);
   pdTurn(156);
-  driveRobot(2.1, 20, true);
-  scoreBallsDeScoreTower();
-  driveRobot(-3, 35, true);
-  pdTurn(310);
+  driveRobot(2.1, 35, true);
+  scoreBallsDeScoreTower(); // second corner
+  driveRobot(-2.7, 35, true); 
+  pdTurn(317);
   outtakeBalls();
-  loadSingleBall(1.3, 35);
+  loadSingleBall(1.5, 35);
   pdTurn(206);
-  loadDoubleBall(1.5, 35);
-  scoreBallsDeScoreTower();
-  driveRobot(-2, 20, true);
-  pdTurn(310);
+  loadDoubleBall(1.44, 35);
+  scoreBallsDeScoreTower(); // third tower
+  driveRobot(-1, 35, true);
+  pdTurn(300);
   outtakeBalls();
+  loadSingleBall(2.6, 35);
+  pdTurn(244);
+  driveRobot(1.1, 35, true);
+  scoreBallsDeScoreTower(); // fourth tower
+  driveRobot(-1, 35, true);
+  pdTurn(412);
+  outtakeBalls();
+  loadSingleBall(3.1, 35);
+  pdTurn(485);
+  driveRobot(1, 35, true);
+  scoreBallsDeScoreTower(); // fifth tower 
+  driveRobot(-1, 35, true);
 
-  //go forward pick up second ball
-  //turn to corner 
+
+
   Controller1.Screen.setCursor(1,1);
   Controller1.Screen.clearLine();
   Controller1.Screen.print("Finished");
@@ -427,8 +475,8 @@ void usercontrol(void) {
     printf("Inertial: %f\n", Inertial.rotation());
 
 
-    leftGroup.spin(vex::directionType::fwd, ((Controller1.Axis3.value()*0.75) + (Controller1.Axis1.value()*0.2)), vex::velocityUnits::pct);
-    rightGroup.spin(vex::directionType::fwd, ((Controller1.Axis3.value()*0.75) - (Controller1.Axis1.value()*0.2)), vex::velocityUnits::pct);
+    leftGroup.spin(vex::directionType::fwd, ((Controller1.Axis3.value()*0.65) + (Controller1.Axis1.value()*0.125)), vex::velocityUnits::pct);
+    rightGroup.spin(vex::directionType::fwd, ((Controller1.Axis3.value()*0.65) - (Controller1.Axis1.value()*0.125)), vex::velocityUnits::pct);
    
     if(Controller1.ButtonR1.pressing())
     {
@@ -437,8 +485,8 @@ void usercontrol(void) {
     }
     else if(Controller1.ButtonR2.pressing())
     {
-     roller1.spin(directionType::rev, 100, velocityUnits::pct);
-     roller2.spin(directionType::rev, 100, velocityUnits::pct);
+     roller1.spin(directionType::rev, 75, velocityUnits::pct);
+     roller2.spin(directionType::rev, 75, velocityUnits::pct);
     }
     else
     {
@@ -456,12 +504,12 @@ void usercontrol(void) {
      intake1.spin(directionType::rev, 100, velocityUnits::pct);
      intake2.spin(directionType::rev, 100, velocityUnits::pct);
     }
-    else if(Controller1.ButtonY.pressing()) // Eject ball when there is one on top
+    else if(Controller1.ButtonUp.pressing()) // Eject ball when there is one on top
     {
      intake1.spin(directionType::fwd, 100, velocityUnits::pct);
      intake2.stop(brakeType::hold);
     }
-    else if(Controller1.ButtonUp.pressing()) // eject ball when no ball on top
+    else if(Controller1.ButtonRight.pressing()) // eject ball when no ball on top
     {
      intake1.spin(directionType::fwd, 100, velocityUnits::pct);
      intake2.spin(directionType::rev, 100, velocityUnits::pct);
@@ -475,10 +523,19 @@ void usercontrol(void) {
     if(Controller1.ButtonA.pressing())
     {
       //drive(36, 50, true);
-      //driveRobot(4, 35, true);
+      testDrive(4, 35, true);
       //scoreBallsDeScoreTower();
       //driveRobot(-2, 50, true);
-      loadSingleBall(3, 35);
+      //loadSingleBall(3, 35);
+    }
+    if(Controller1.ButtonLeft.pressing())
+    {
+      //drive(36, 50, true);
+      //driveRobot(4, 35, true);
+      testDrive(4, 35, true);
+      //scoreBallsDeScoreTower();
+      //driveRobot(-2, 50, true);
+      //loadSingleBall(3, 35);
     }
     wait(20, msec); // Sleep the task for a short amount of time to
                     // prevent wasted resources.
