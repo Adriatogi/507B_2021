@@ -19,8 +19,8 @@ using namespace vex;
 competition Competition;
 
 // define your global instances of motors and other devices here
-motor FR(PORT18, gearSetting::ratio18_1, false);
-motor FL(PORT19, gearSetting::ratio18_1, true);
+motor FR(PORT19, gearSetting::ratio18_1, false);
+motor FL(PORT18, gearSetting::ratio18_1, true);
 motor BL(PORT17, gearSetting::ratio18_1, true);
 motor BR(PORT15, gearSetting::ratio18_1, false);
 motor roller1(PORT14, gearSetting::ratio6_1, true);
@@ -54,9 +54,9 @@ timer timer1;
 
 int pickUpRedTask() // pick up red ball task
 {
-
+  timer1.clear();
   //while the red ball isnt picked up, do nothing
-  while(Optical.color() != red) 
+  while(timer1<500 || Optical.color() != red) 
   {
   }
 
@@ -64,6 +64,7 @@ int pickUpRedTask() // pick up red ball task
   rollers.stop(brakeType::hold);
   intake1.spin(directionType::fwd, -40, velocityUnits::pct);
   task::sleep(500);
+  intake2.stop(brakeType::hold);
   intake1.stop(brakeType::hold);
   return(0);
 }
@@ -212,7 +213,7 @@ void loadSingleBall(float revs, int speed)// stop spinning if it also detects a 
 {
   rollers.spin(directionType::fwd, 100, velocityUnits::pct);
   intake1.spin(directionType::fwd, 80, velocityUnits::pct);
-  intake2.stop(brakeType::hold);
+  intake2.spin(directionType::rev, 80, velocityUnits::pct);
 
   task myTask = task(pickUpRedTask);
 
@@ -225,28 +226,13 @@ void loadSingleBall(float revs, int speed)// stop spinning if it also detects a 
   intake2.stop();
 }
 
-void loadSingleBallTest(float revs, int speed)// stop spinning if it also detects a blue ball in the inside, but keep driving
-{
-  rollers.spin(directionType::fwd, 100, velocityUnits::pct);
-  intake1.spin(directionType::fwd, 80, velocityUnits::pct);
-  intake2.stop(brakeType::hold);
-
-  task myTask = task(pickUpRedTask);
-
-  testDrive(revs, speed, true);
-
-  myTask.stop();
-  
-  rollers.stop();
-  intake1.stop();
-  intake2.stop();
-}
-
 void loadDoubleBall(float revs, int speed)
 {
   rollers.spin(directionType::fwd, 100, velocityUnits::pct);
+  intake1.stop();
   //intake1.spin(directionType::fwd, 80, velocityUnits::pct);
-  intake2.stop(brakeType::hold);
+  //intake2.stop(brakeType::hold);
+  intake2.spin(directionType::rev, 100, velocityUnits::pct);
 
   driveRobot(revs, speed, true);
 
@@ -367,7 +353,7 @@ void startUp()
   intake2.spin(directionType::fwd, 50, velocityUnits::pct);
   roller1.spin(directionType::fwd, 50, velocityUnits::pct);
   roller2.spin(directionType::fwd, 50, velocityUnits::pct);
-  task::sleep(1000);
+  task::sleep(500);
   roller1.stop();
   roller2.stop();
   intake2.stop();
@@ -410,38 +396,40 @@ void autonomous(void) {
 
   startUp();
   loadSingleBall(2.2, 50);
-  pdTurn(77);
-  driveRobot(0.71, 35, true);
+  pdTurn(76);
+  driveRobot(0.70, 40, true);
   scoreBallsDeScoreTower(); // first conrner
-  driveRobot(-2.75, 35, true);
-  pdTurn(205);
-  outtakeBalls();
-  loadSingleBall(3.75, 40);
-  pdTurn(156);
-  driveRobot(2.1, 35, true);
+  driveRobot(-2.71, 40, true);
+  pdTurn(204);
+  //outtakeBalls();
+  loadSingleBall(3.75, 35);
+  pdTurn(154);
+  driveRobot(2.25, 40, true);
   scoreBallsDeScoreTower(); // second corner
-  driveRobot(-2.7, 35, true); 
-  pdTurn(317);
-  outtakeBalls();
+  driveRobot(-2.7, 40, true); 
+  pdTurn(319);//322, 319
+  //outtakeBalls();
   loadSingleBall(1.5, 35);
-  pdTurn(206);
-  loadDoubleBall(1.44, 35);
+  pdTurn(205);
+  loadDoubleBall(1.44, 40);
   scoreBallsDeScoreTower(); // third tower
   driveRobot(-1, 35, true);
-  pdTurn(300);
-  outtakeBalls();
-  loadSingleBall(2.6, 35);
-  pdTurn(244);
-  driveRobot(1.1, 35, true);
+  pdTurn(293); //293
+  //outtakeBalls();
+  loadSingleBall(2.5, 35);
+  pdTurn(243);
+  driveRobot(1.29, 40, true);
   scoreBallsDeScoreTower(); // fourth tower
-  driveRobot(-1, 35, true);
-  pdTurn(412);
-  outtakeBalls();
+  driveRobot(-1, 40, true);
+  pdTurn(410); //417, 416, 414, 410
+  //outtakeBalls();
   loadSingleBall(3.1, 35);
-  pdTurn(485);
-  driveRobot(1, 35, true);
+  pdTurn(481);
+  driveRobot(0.37, 40, true);
+  //driveRobot(-0.5, 40, true);
+  //driveRobot(0.5, 40, true);
   scoreBallsDeScoreTower(); // fifth tower 
-  driveRobot(-1, 35, true);
+  driveRobot(-1, 80, true);
 
 
 
@@ -523,19 +511,10 @@ void usercontrol(void) {
     if(Controller1.ButtonA.pressing())
     {
       //drive(36, 50, true);
-      testDrive(4, 35, true);
+      //testDrive(4, 35, true);
       //scoreBallsDeScoreTower();
       //driveRobot(-2, 50, true);
-      //loadSingleBall(3, 35);
-    }
-    if(Controller1.ButtonLeft.pressing())
-    {
-      //drive(36, 50, true);
-      //driveRobot(4, 35, true);
-      testDrive(4, 35, true);
-      //scoreBallsDeScoreTower();
-      //driveRobot(-2, 50, true);
-      //loadSingleBall(3, 35);
+      loadSingleBall(5, 35);
     }
     wait(20, msec); // Sleep the task for a short amount of time to
                     // prevent wasted resources.
